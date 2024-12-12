@@ -1,0 +1,55 @@
+name: Build APK for Kivy App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # Step 3: Install dependencies including Buildozer and Cython
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython flet buildozer
+
+      # Step 4: Prepare Buildozer configuration (buildozer.spec file)
+      - name: Prepare Buildozer Configuration
+        run: |
+          echo "Creating buildozer.spec file..."
+          if [ ! -f buildozer.spec ]; then
+            buildozer init
+          fi
+          # Customize buildozer.spec file settings for Kivy app
+          sed -i 's/^# \(android\.requirements\).*/\1 = python3,kivy/' buildozer.spec
+          sed -i 's/^# \(title =\).*/\1 KivyApp/' buildozer.spec
+          sed -i 's/^# \(package\.name =\).*/\1 kivyapp/' buildozer.spec
+          sed -i 's/^# \(package\.domain =\).*/\1 org.example/' buildozer.spec
+
+      # Step 5: Build the APK with Buildozer
+      - name: Build APK
+        run: |
+          buildozer -v android debug
+
+      # Step 6: Upload the APK as a GitHub artifact
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: kivy-app-apk
+          path: bin/*.apk
