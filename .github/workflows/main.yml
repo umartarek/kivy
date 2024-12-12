@@ -23,19 +23,28 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Step 3: Install dependencies including Buildozer, Cython, and Android SDK tools
+      # Step 3: Install Dependencies and Android SDK components
       - name: Install Dependencies
         run: |
-          # Install Android SDK tools (includes AIDL)
+          # Install OpenJDK 8 for Android builds
           sudo apt update
           sudo apt install -y openjdk-8-jdk
-          sudo apt install -y android-sdk
 
-          # Set up environment variables for Android SDK
+          # Install Android SDK tools
+          sudo apt install -y android-sdk
+          sudo apt install -y unzip
+
+          # Set environment variables for Android SDK
           echo "ANDROID_HOME=/usr/lib/android-sdk" >> $GITHUB_ENV
           echo "PATH=$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
-          
-          # Install Python dependencies for Buildozer
+
+          # Accept SDK licenses
+          yes | sdkmanager --licenses
+
+          # Install specific SDK components required for building the APK
+          sdkmanager "platform-tools" "platforms;android-29" "build-tools;29.0.2" "ndk;21.1.6352462"
+
+          # Install Python dependencies for Buildozer and Cython
           python -m pip install --upgrade pip
           pip install cython flet buildozer
 
